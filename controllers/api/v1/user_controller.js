@@ -13,7 +13,7 @@ module.exports.signup = async (req, res) => {
     if (password !== confirmPassword) {
       return res.status(400).json({ error: "Passwords do not match" });
     }
-    const existingUser = await User.findOne(email);
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
         .status(400)
