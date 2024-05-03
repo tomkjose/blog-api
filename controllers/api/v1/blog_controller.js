@@ -1,5 +1,5 @@
 const Blog = require("../../../models/blog");
-
+const path = require("path");
 module.exports.create = async (req, res) => {
   try {
     Blog.uploadThumbnail(req, res, async function (error) {
@@ -18,8 +18,9 @@ module.exports.create = async (req, res) => {
       }
 
       let thumbnail;
+      // console.log("req.file", req.file);
       if (req.file) {
-        thumbnail = req.file.path;
+        thumbnail = path.join(Blog.thumbPath, req.file.filename);
       }
       const newBlog = new Blog({
         title,
@@ -43,8 +44,8 @@ module.exports.update = async (req, res) => {
     const postId = req.params.id;
     const { title, body } = req.body;
     const userId = req.user.userId;
-    console.log("req.body", req.body);
-    console.log("userId", userId);
+    // console.log("req.body", req.body);
+    // console.log("userId", userId);
     if (!postId) {
       return res.status(400).json({ error: "Post ID is required" });
     }
@@ -84,6 +85,20 @@ module.exports.allPost = async (req, res) => {
     });
 
     res.status(200).json(allPosts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports.singlePost = async (req, res) => {
+  try {
+    const post = await Blog.findById(req.params.id).populate({
+      path: "author",
+      select: "username email avatar",
+    });
+
+    res.status(200).json(post);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

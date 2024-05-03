@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
 const User = require("../../../models/user");
+const path = require("path");
 require("dotenv").config();
 
 module.exports.signup = async (req, res) => {
@@ -48,7 +49,7 @@ module.exports.signin = async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
-    console.log("userId", user._id);
+    // console.log("userId", user._id);
     const token = jwt.sign(
       { email: user.email, username: user.username, userId: user._id },
       process.env.JWT_SECRET
@@ -74,19 +75,25 @@ module.exports.updateProfile = async (req, res) => {
     }
     User.uploadAvatar(req, res, async (error) => {
       if (error) {
-        return res.status(500).json({ error: "Error in updating" });
+        return res.status(500).json({ error: "Error in updating" + error });
       }
       user.email = req.body.email;
       user.username = req.body.username;
+      // console.log("req.file", req.file);
       if (req.file) {
-        if (user.avatar) {
-          fs.unlinkSync(path.join(__dirname, "..", user.avatar));
-        }
-        user.avatar = User.avatarPath + "/" + req.file.filename;
+        // if (user.avatar) {
+        //   fs.unlinkSync(path.join(__dirname, "..", user.avatar));
+        // }
+        user.avatar = path.join(User.avatarPath, req.file.filename);
       }
       try {
         await user.save();
-        res.status(200).json({ message: "Profile updated successfully" });
+        res.status(200).json({
+          message: "Profile updated successfully",
+          avatar: user.avatar,
+          username: user.username,
+          email: user.email,
+        });
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error in updating profile" });
